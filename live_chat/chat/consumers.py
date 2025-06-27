@@ -3,6 +3,11 @@ import json
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        self.user = self.scope["user"]
+        if not self.user.is_authenticated:
+            await self.close()
+            return
+
         await self.channel_layer.group_add("chat", self.channel_name)
         await self.accept()
 
@@ -11,17 +16,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        await self.channel_layer.group_send(
-            "chat",
-            {
-                "type": "chat_message",
-                "username": data["username"],
-                "message": data["message"],
-            }
-        )
+        message = data['message']
+
+        await self.channel_layer.group_send("chat", {
+            "type": "chat_message",
+            "username": self.user.username,
+            "message": message
+        })
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
             "username": event["username"],
-            "message": event["message"],
+            "message": event["message"]
         }))

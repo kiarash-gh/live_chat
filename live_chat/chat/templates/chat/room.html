@@ -1,39 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Chat</title>
-</head>
-<body>
-  <h1>Chat</h1>
-  <input id="username" placeholder="Your name" />
-  <input id="message" placeholder="Type your message" />
-  <button onclick="sendMessage()">Send</button>
-  <div id="chat-log"></div>
+<h2>Chat Room</h2>
+<p>Welcome, {{ username }} | <a href="/logout/">Logout</a></p>
 
-  <script>
-    const chatSocket = new WebSocket(
-      'ws://' + window.location.host + '/ws/chat/'
-    );
+<div id="chat-log"></div>
+<input id="chat-message-input" placeholder="Type message..." />
+<button id="chat-message-submit">Send</button>
 
-    chatSocket.onopen = function () {
-      console.log('WebSocket connection opened');
-    };
+<script>
+  const socket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
 
-    chatSocket.onmessage = function (e) {
-      const data = JSON.parse(e.data);
-      const log = document.getElementById('chat-log');
-      log.innerHTML += `<p><strong>${data.username}</strong>: ${data.message}</p>`;
-    };
+  socket.onmessage = function (e) {
+    const data = JSON.parse(e.data);
+    document.getElementById('chat-log').innerHTML += `<p><b>${data.username}</b>: ${data.message}</p>`;
+  };
 
-    chatSocket.onerror = function (e) {
-      console.error('WebSocket error:', e);
-    };
-
-    function sendMessage() {
-      const username = document.getElementById('username').value;
-      const message = document.getElementById('message').value;
-      chatSocket.send(JSON.stringify({ username, message }));
-    }
-  </script>
-</body>
-</html>
+  document.getElementById('chat-message-submit').onclick = function () {
+    const message = document.getElementById('chat-message-input').value;
+    socket.send(JSON.stringify({
+      'message': message
+    }));
+    document.getElementById('chat-message-input').value = '';
+  };
+</script>
