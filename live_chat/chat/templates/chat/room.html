@@ -1,7 +1,12 @@
 <h2>Chat Room</h2>
 <p>Welcome, {{ username }} | <a href="/logout/">Logout</a></p>
 
-<div id="chat-log"></div>
+<div id="chat-log">
+  {% for message in messages %}
+    <p><b>{{ message.user.username }}</b>: {{ message.content }}</p>
+  {% endfor %}
+</div>
+
 <input id="chat-message-input" placeholder="Type message..." />
 <button id="chat-message-submit">Send</button>
 
@@ -15,9 +20,7 @@
 
   document.getElementById('chat-message-submit').onclick = function () {
     const message = document.getElementById('chat-message-input').value;
-    socket.send(JSON.stringify({
-      'message': message
-    }));
+    socket.send(JSON.stringify({ message }));
     document.getElementById('chat-message-input').value = '';
   };
 </script>

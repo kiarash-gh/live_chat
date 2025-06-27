@@ -2,11 +2,15 @@ from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.decorators import login_required
-
+from .models import Message
 
 @login_required
 def room(request):
-    return render(request, 'chat/room.html')
+    messages = Message.objects.select_related('user').all().order_by('-timestamp')[:50]  # latest 50
+    return render(request, 'chat/room.html', {
+        'username': request.user.username,
+        'messages': reversed(messages) 
+    })
 
 
 def login_view(request):
