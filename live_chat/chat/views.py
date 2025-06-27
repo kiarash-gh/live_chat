@@ -4,6 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.decorators import login_required
 from .models import Message,ChatRoom
 from django.contrib.auth.models import User
+from django.db.models import Count,Q
 
 @login_required
 def room(request):
@@ -19,20 +20,49 @@ def chat_dashboard(request):
     chatrooms = request.user.chatrooms.all()
     return render(request, 'chat/dashboard.html', {'chatrooms': chatrooms})
 
+
+
+
 @login_required
 def create_chat(request):
     if request.method == 'POST':
         chat_type = request.POST.get('chat_type')
-        user_ids = request.POST.getlist('users')  # selected users from form
+        user_ids = request.POST.getlist('users')
         name = request.POST.get('name') if chat_type == 'group' else ""
 
-        chat = ChatRoom.objects.create(chat_type=chat_type, name=name)
+        if chat_type == 'private':
+            if len(user_ids) != 1:
+                return render(request, 'chat/create_chat.html', {
+                    'users': User.objects.exclude(id=request.user.id),
+                    'error': 'Select exactly one user for a private chat.'
+                })
+
+            other_user = User.objects.get(id=user_ids[0])
+
+            # ✅ FIXED QUERY — find chatrooms with exactly these 2 users
+            chatrooms = ChatRoom.objects.filter(
+                chat_type='private',
+                participants__in=[request.user, other_user]
+            ).annotate(num_participants=Count('participants')
+            ).filter(num_participants=2)
+
+            for room in chatrooms:
+                participants = list(room.participants.all())
+                if request.user in participants and other_user in participants:
+                    return redirect('chatroom_detail', chat_id=room.id)
+
+            # ❌ No existing room found — create new
+            chat = ChatRoom.objects.create(chat_type='private')
+            chat.participants.add(request.user, other_user)
+            return redirect('chatroom_detail', chat_id=chat.id)
+
+        # 🟢 Group chat
+        chat = ChatRoom.objects.create(chat_type='group', name=name)
         chat.participants.add(request.user, *User.objects.filter(id__in=user_ids))
         return redirect('chatroom_detail', chat_id=chat.id)
 
     users = User.objects.exclude(id=request.user.id)
     return render(request, 'chat/create_chat.html', {'users': users})
-
 
 @login_required
 def chatroom_detail(request, chat_id):
