@@ -2,10 +2,10 @@
 {% block content %}
 <h2>Your Chats</h2>
 <ul>
-  {% for chat in chatrooms %}
+  {% for chatroom in chatrooms %}
     <li>
-      <a href="{% url 'chatroom_detail' chat.id %}">
-        {{ chat.name|default:"Chat #"|add:chat.id }} ({{ chat.chat_type }})
+      <a href="{% url 'chatroom_detail' chat_id=chatroom.id %}">
+        {{ chatroom.display_name }}
       </a>
     </li>
   {% empty %}

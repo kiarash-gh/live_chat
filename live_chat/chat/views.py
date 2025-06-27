@@ -17,8 +17,23 @@ def room(request):
 
 @login_required
 def chat_dashboard(request):
-    chatrooms = request.user.chatrooms.all()
-    return render(request, 'chat/dashboard.html', {'chatrooms': chatrooms})
+    chatrooms = request.user.chatrooms.all().prefetch_related('participants')
+
+    chat_display = []
+    for chat in chatrooms:
+        if chat.chat_type == 'group':
+            display_name = chat.name or f"Group Chat #{chat.id}"
+        else:
+            # Private chat — show the *other* user's name
+            other_user = chat.participants.exclude(id=request.user.id).first()
+            display_name = other_user.username if other_user else "Private Chat"
+
+        chat_display.append({
+            'id': chat.id,
+            'display_name': display_name,
+        })
+
+    return render(request, 'chat/dashboard.html', {'chatrooms': chat_display})
 
 
 
