@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat</title>
+</head>
+<body>
+  <h1>Chat</h1>
+  <input id="username" placeholder="Your name" />
+  <input id="message" placeholder="Type your message" />
+  <button onclick="sendMessage()">Send</button>
+  <div id="chat-log"></div>
+
+  <script>
+    const chatSocket = new WebSocket(
+      'ws://' + window.location.host + '/ws/chat/'
+    );
+
+    chatSocket.onopen = function () {
+      console.log('WebSocket connection opened');
+    };
+
+    chatSocket.onmessage = function (e) {
+      const data = JSON.parse(e.data);
+      const log = document.getElementById('chat-log');
+      log.innerHTML += `<p><strong>${data.username}</strong>: ${data.message}</p>`;
+    };
+
+    chatSocket.onerror = function (e) {
+      console.error('WebSocket error:', e);
+    };
+
+    function sendMessage() {
+      const username = document.getElementById('username').value;
+      const message = document.getElementById('message').value;
+      chatSocket.send(JSON.stringify({ username, message }));
+    }
+  </script>
+</body>
+</html>
