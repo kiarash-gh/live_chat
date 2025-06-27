@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Create New Chat</h2>
+
+<form method="post">
+  {% csrf_token %}
+  
+  <label>
+    <input type="radio" name="chat_type" value="private" checked> Private
+  </label>
+  <label>
+    <input type="radio" name="chat_type" value="group"> Group
+  </label>
+
+  <div id="group-name-field" style="display: none;">
+    <label>Group Name:
+      <input type="text" name="name" />
+    </label>
+  </div>
+
+  <h3>Select Users:</h3>
+  <input type="text" id="user-search" placeholder="Search users..." />
+  <ul id="user-list">
+    {% for user in users %}
+      <li>
+        <label>
+          <input type="checkbox" name="users" value="{{ user.id }}">
+          {{ user.username }}
+        </label>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <button type="submit">Create Chat</button>
+</form>
+
+<script>
+// Show group name input if group selected
+document.querySelectorAll('input[name="chat_type"]').forEach(el => {
+  el.addEventListener('change', function() {
+    document.getElementById('group-name-field').style.display =
+      this.value === 'group' ? 'block' : 'none';
+  });
+});
+
+// Filter user list
+document.getElementById('user-search').addEventListener('input', function() {
+  const query = this.value.toLowerCase();
+  document.querySelectorAll('#user-list li').forEach(li => {
+    const name = li.textContent.toLowerCase();
+    li.style.display = name.includes(query) ? '' : 'none';
+  });
+});
+</script>
+{% endblock %}

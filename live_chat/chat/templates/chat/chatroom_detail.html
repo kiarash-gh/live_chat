@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ chatroom.name|default:"Chat #"|add:chatroom.id }}</h2>
+
+<div id="chat-log" style="border: 1px solid #ccc; padding: 1rem; height: 300px; overflow-y: auto;">
+  {% for msg in messages %}
+    <p><strong>{{ msg.sender.username }}</strong>: {{ msg.content }}</p>
+  {% endfor %}
+</div>
+
+<form id="chat-form">
+  {% csrf_token %}
+  <input type="text" id="chat-message-input" autocomplete="off" placeholder="Type a message..." />
+  <button type="submit">Send</button>
+</form>
+
+<script>
+const chatId = "{{ chatroom.id|default:'' }}";
+const username = "{{ request.user.username }}";
+
+if (chatId) {
+    const socket = new WebSocket(`ws://${window.location.host}/ws/chat/${chatId}/`);
+
+    socket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const chatLog = document.getElementById('chat-log');
+        chatLog.innerHTML += `<p><strong>${data.username}</strong>: ${data.message}</p>`;
+        chatLog.scrollTop = chatLog.scrollHeight;
+    };
+
+    document.getElementById('chat-form').onsubmit = function(e) {
+        e.preventDefault();
+        const input = document.getElementById('chat-message-input');
+        const message = input.value.trim();
+        if (message) {
+            socket.send(JSON.stringify({ message }));
+            input.value = '';
+        }
+    };
+} else {
+    console.warn("No chat ID available — WebSocket not started.");
+}
+</script>
+
+
+{% endblock %}

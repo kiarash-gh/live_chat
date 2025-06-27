@@ -3,7 +3,7 @@
 
 <div id="chat-log">
   {% for message in messages %}
-    <p><b>{{ message.user.username }}</b>: {{ message.content }}</p>
+    <p><b>{{ message.sender.username }}</b>: {{ message.content }}</p>
   {% endfor %}
 </div>
 
